@@ -14,6 +14,7 @@ import java.util.Stack;
 public class LeetCodeProblems {
 
     public static void main(String[] args) {
-        new RangeSumQueryMutable().test();
+//        new SlidingWindowMaximum().test();
+        System.out.println(Integer.bitCount(255));
     }
 }

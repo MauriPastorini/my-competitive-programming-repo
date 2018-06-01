@@ -147,6 +147,6 @@ public class AhoCorasick {
         tree.addWord("apple");
         tree.addWord("banana");
         tree.computeFall();
-        tree.search("askfjasjfklasjfasfjpabananasfjawofjoawjfopjapapple");
+        tree.search("askfjasbananajfklasjfasfjpabananasfjawofjoawjfopjapapple");
     }
 }

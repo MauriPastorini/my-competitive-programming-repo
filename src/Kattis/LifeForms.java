@@ -1,141 +1,132 @@
 package Kattis;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class LifeForms {
 
-//    public static void main(String[] args) {
-//        Scanner in = new Scanner(System.in);
-//        String input = in.nextLine();
-//        while (true) {
-//            if (input.equals("0")) {
-//                break;
-//            }
-//            int cant = Integer.parseInt(input);
-//            int half = cant / 2;
-//            StringBuilder strbuild = new StringBuilder();
-//            int separator = 1;
-//            Map<Integer, Integer> map = new HashMap<>();
-//            for (int i = 0; i < cant; i++) {
-//                String word = in.nextLine();
-//                for (int j = 0; j < word.length(); j++) {
-//                    map.put(strbuild.length() + j, i);
-//                }
-//                strbuild.append(word);
-//                if (i != cant - 1) {
-//                    strbuild.append(separator);
-//                    separator++;
-//                }
-//            }
-//            String wordCont = strbuild.toString();
-//            int[] sa = suffixArray(strbuild.toString());
-//            int[] lcp = lcp(sa, wordCont);
-//
-//            int actual = 0;
-//            int mid = cant / 2;
-//            Set<Integer> set = new HashSet<>();
-//            int maxString = 0;
-//            List<String> sol = new ArrayList<>();
-//            for (int i = 0; i < lcp.length; i++) {
-//                if (lcp[i] != 0 && lcp[i] == lcp[actual]) {
-//                    set.add(map.get(sa[i]));
-//                } else {
-//                    if (set.size() > mid) {
-//                        if (lcp[actual] >= maxString) {
-//                            if (lcp[actual] != maxString) {
-//                                sol = new ArrayList<>();
-//                            }
-//                            maxString = lcp[actual];
-//                            sol.add(wordCont.substring(sa[actual], sa[actual] + lcp[actual]));
-//                        }
-//                    }
-//                    set = new HashSet<>();
-//                    if (lcp[i] != 0) {
-//                        set.add(map.get(sa[i]));
-//                        set.add(map.get(sa[i - 1]));
-//                    }
-//                    actual = i;
-//                }
-//            }
-//            if (set.size() > mid) {
-//                if (lcp[actual] >= maxString) {
-//                    if (lcp[actual] != maxString) {
-//                        sol = new ArrayList<>();
-//                    }
-//                    sol.add(wordCont.substring(sa[actual], sa[actual] + lcp[actual]));
-//                }
-//            }
-//            if (sol.isEmpty()) {
-//                System.out.println("?");
-//            } else {
-//                for (String string : sol) {
-//                    System.out.println(string);
-//                }
-//            }
-//            input = in.nextLine();
-//            if (!input.equals("0")) {
-//                System.out.println("");
-//            }
-//        }
-//    }
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
-        String input = in.nextLine();
+        int cant = Integer.parseInt(in.nextLine());
         while (true) {
-            if (input.equals("0")) {
-                break;
+            int n = cant;
+            String[] words = new String[cant];
+            while (cant-- != 0) {
+                words[n - cant - 1] = in.nextLine();
             }
-            int cant = Integer.parseInt(input);
-            int half = cant / 2;
-            StringBuilder strbuild = new StringBuilder();
-            int separator = 1;
-            Map<Integer, Integer> map = new HashMap<>();
-            for (int i = 0; i < cant; i++) {
-                String word = in.nextLine();
-                for (int j = 0; j < word.length(); j++) {
-                    map.put(strbuild.length() + j, i);
+            char separator = '$';
+            StringBuilder strBuild = new StringBuilder();
+            Map<Integer, String> map = new HashMap<>();
+            for (int i = 0; i < n; i++) {
+                char[] cs = words[i].toCharArray();
+                for (int j = 0; j < words[i].length(); j++) {
+                    map.put(strBuild.length(), words[i] + separator);
+                    strBuild.append(cs[j]);
                 }
-                strbuild.append(word);
-                if (i != cant - 1) {
-                    strbuild.append(separator);
-                    separator++;
-                }
+                map.put(strBuild.length(), words[i] + separator);
+                strBuild.append(separator++);
             }
-            String wordCont = strbuild.toString();
-            int[] sa = suffixArray(strbuild.toString());
-            int[] lcp = lcp(sa, wordCont);
+            int condOfEqual = n / 2 + 1;
 
-            int actual = 0;
-            int mid = cant / 2;
-            List<String> sol = new ArrayList<>();
-            Set<Integer> set = new HashSet<>();
+            int[] sa = suffixArray(strBuild.toString());
+            int[] lcp = lcp(sa, strBuild.toString());
 
-            int start = 0;
-            int end = lcp.length;
-            while (start < end) {
-                if (set.size() <= mid) {
-                    end++;
-                }
-            }
+            Set<String> lst = maxSlidingWindow(strBuild.toString(), sa, lcp, condOfEqual, map, n);
 
-            if (sol.isEmpty()) {
+            if (lst.isEmpty()) {
                 System.out.println("?");
             } else {
-                for (String string : sol) {
+                for (String string : lst) {
                     System.out.println(string);
                 }
             }
-            input = in.nextLine();
-            if (!input.equals("0")) {
+            cant = Integer.parseInt(in.nextLine());
+            if (cant == 0) {
+                break;
+            } else{
                 System.out.println("");
+            }
+        }
+    }
+
+    public static Set<String> maxSlidingWindow(String wordConcat, int[] sa, int[] lcp, int minWords, Map<Integer, String> mapWordInPos, int cantDifWords) {
+        Set<String> lst = new TreeSet<>();
+        List<Integer> lstAux = new ArrayList<>();
+        if (lcp == null || minWords <= 0) {
+            return lst;
+        }
+        int n = lcp.length;
+        Map<String, Integer> wordsInWindow = new HashMap<>();
+
+        // store index
+        Deque<Integer> q = new ArrayDeque<>();
+        int start = cantDifWords;
+        int end = cantDifWords;
+        int minIndex = -1;
+        int newIndex = start;
+        boolean startMoved = false;
+        while (start < lcp.length) {
+            if (!startMoved) {
+                updateMapWordsInWindow(true, sa[newIndex], mapWordInPos, wordsInWindow);
+            }
+            // remove numbers out of range k
+            while (!q.isEmpty() && q.peek() <= start) {
+                q.poll();
+            }
+            // remove grater numbers in k range as they are useless
+            while (!q.isEmpty() && newIndex == end && lcp[q.peekLast()] > lcp[newIndex]) {
+                q.pollLast();
+            }
+            // q contains index... r contains content
+            if (!startMoved && lcp[newIndex] != 0) {
+                q.offer(newIndex);
+            }
+            if (wordsInWindow.size() >= minWords) {
+                if (!q.isEmpty()) {
+                    if (minIndex == -1 || lcp[q.peek()] >= lcp[minIndex]) {
+                        if (minIndex == -1 || lcp[q.peek()] > lcp[minIndex]) {
+                            lstAux = new ArrayList<>();
+                        }
+                        minIndex = q.peek();
+                        lstAux.add(minIndex);
+                    }
+                }
+            }
+            if (wordsInWindow.size() < minWords) {
+                end++;
+                newIndex = end;
+                startMoved = false;
+            }
+            if (wordsInWindow.size() >= minWords || end >= lcp.length) {
+                updateMapWordsInWindow(false, sa[start], mapWordInPos, wordsInWindow);
+                start++;
+                newIndex = start;
+                startMoved = true;
+            }
+        }
+        for (Integer i : lstAux) {
+            lst.add(wordConcat.substring(sa[i], sa[i] + lcp[i]));
+        }
+        return lst;
+    }
+
+    private static void updateMapWordsInWindow(boolean isAdding, int i, Map<Integer, String> mapWordInPos, Map<String, Integer> wordsInWindow) {
+        String word = mapWordInPos.get(i);
+        if (isAdding) {
+            wordsInWindow.put(word, wordsInWindow.getOrDefault(word, 0) + 1);
+        } else {
+            if (wordsInWindow.get(word) == 1) {
+                wordsInWindow.remove(word);
+            } else {
+                wordsInWindow.put(word, wordsInWindow.get(word) - 1);
             }
         }
     }
